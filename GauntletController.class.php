@@ -345,7 +345,7 @@ class GauntletController {
 
 	/**
 	 * @HandlesCommand("gauupdate")
-	 * @Matches("/^gauupdate ([a-z0-9]+)$/i")
+	 * @Matches("/^gauupdate ([a-z0-9 ]+)$/i")
 	 */
 	public function gauupdateCommand($message, $channel, $sender, $sendto, $args) {
 		$newSpawn = $this->util->parseTime($args[1]);
@@ -354,6 +354,7 @@ class GauntletController {
 			$sendto->reply($msg);
 			return;
 		}
+                $newSpawn += time();
 		$this->setGauTime($newSpawn, $sender, time());
 		$msg="Bot was updated manually! Vizaresh will be vulnerable at ".$this->gauntgetTime(0)."\n (Normal respawn is every 17h07m)";
 		$sendto->reply($msg);
