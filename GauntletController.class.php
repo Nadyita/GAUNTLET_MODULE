@@ -179,7 +179,7 @@ class GauntletController {
 	 */
 	public function gautradeCommand($message, $channel, $sender, $sendto, $args) {
 		$info = file_get_contents(getcwd()."/modules/".$this->moduleName.'/gautrade');
-		$msg = $this->text->makeLegacyBlob(".:Gauntlet Tradeskills:.", $info);
+		$msg = $this->text->makeLegacyBlob("Gauntlet Tradeskills", $info);
 		$sendto->reply($msg);
 	}
 
