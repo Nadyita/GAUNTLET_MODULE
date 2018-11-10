@@ -159,18 +159,13 @@ class GauntletController {
 		$timer = $this->timerController->get('Gauntlet');
 		if ($timer === null) {
 			return 0;
-		} else {
-			return $this->tmTime($timer->endtime + 61620*$zz);
 		}
+		return $this->tmTime($timer->endtime + 61620*$zz);
 	}
 
-	private function checkalt($name,$name2) {
-		$result = false;
+	private function checkalt($name, $name2) {
 		$altInfo = $this->altsController->getAltInfo($name2);
-		foreach ($altInfo->getAllAlts() as $alt) {
-			if ($name == $alt) { $result = true; break;}
-		}
-		return $result;
+		return in_array($name, $altInfo->getAllAlts());
 	}
 
 	/**
@@ -191,22 +186,22 @@ class GauntletController {
 		//*** subscribe/unsubscribe for raid ***
 		if (!isset($args[2])) {
 			$args[2] = $sender;
-		};
-		if(($args[1] <= 9)&&($args[1] >= 0)){
-			if($this->checkalt($sender,$args[2])){
-				if(isset($this->gaumem[$args[1]][$args[2]])){
-					$this->gaumem[$args[1]][$args[2]]=0;
-					unset($this->gaumem[$args[1]][$args[2]]);
-					$msg = "You removed $args[2] from the Gauntlet at ".$this->gauntgetTime($args[1]);
-				} else {
-					$this->gaumem[$args[1]][$args[2]]=1;
-					$msg = "$args[2] is now subscribed for the Gauntlet at ".$this->gauntgetTime($args[1]);
-				}
-			} else {
-				$msg="This is none of your chars!";
-			}
+		}
+		if (($args[1] > 9) || ($args[1] < 0)) {
+			$sendto->reply("This raid doesn't exist!");
+			return;
+		}
+		if (!$this->checkalt($sender, $args[2])) {
+			$sendto->reply("This is none of your chars!");
+			return;
+		}
+		if (isset($this->gaumem[$args[1]][$args[2]])) {
+			$this->gaumem[$args[1]][$args[2]]=0;
+			unset($this->gaumem[$args[1]][$args[2]]);
+			$msg = "You removed <highlight>$args[2]<end> from the Gauntlet at ".$this->gauntgetTime($args[1]);
 		} else {
-			$msg="This raid doesn't exist!";
+			$this->gaumem[$args[1]][$args[2]]=1;
+			$msg = "<highlight>$args[2]<end> is now subscribed for the Gauntlet at ".$this->gauntgetTime($args[1]);
 		}
 		$sendto->reply($msg);
 	}
@@ -220,22 +215,22 @@ class GauntletController {
 		if (!isset($args[2])) {
 			$args[2] = $sender;
 		};
-		if(($args[1] <= 9)&&($args[1] >= 0)){
-			if($this->checkalt($sender,$args[2])){
-				$msg = "Subscription for the Gauntlet at ".$this->gauntgetTime($args[1])." with the main $args[2]:\n\n";
-				$altInfo = $this->altsController->getAltInfo($args[2]);
-                                $allAlts = $altInfo->getAllAlts();
-                                sort($allAlts);
-				foreach ($allAlts as $alt) {
-					$msg .= "     - <a href='chatcmd:///tell <myname> <symbol>gauntlet sub $args[1] $alt'>$alt</a>\n";
-				}
-				$msg = $this->text->makeBlob("Un/Subscribe", $msg);
-			} else {
-				$msg="This is none of your chars!";
-			}
-		} else {
-			$msg="This raid doesn't exist!";
+		if (($args[1] > 9) || ($args[1] < 0)) {
+			$sendto->reply("This raid doesn't exist!");
+			return;
 		}
+		if (!$this->checkalt($sender, $args[2])) {
+			$sendto->reply("This is none of your chars!");
+			return;
+		}
+		$msg = "Subscription for the Gauntlet at ".$this->gauntgetTime($args[1])." with the main $args[2]:\n\n";
+		$altInfo = $this->altsController->getAltInfo($args[2]);
+                $allAlts = $altInfo->getAllAlts();
+                sort($allAlts);
+		foreach ($allAlts as $alt) {
+			$msg .= "     - <a href='chatcmd:///tell <myname> <symbol>gauntlet sub $args[1] $alt'>$alt</a>\n";
+		}
+		$msg = $this->text->makeBlob("Un/Subscribe", $msg);
 		$sendto->reply($msg, $sendto);
 	}
 
@@ -257,17 +252,16 @@ class GauntletController {
 	public function gauntletRollqueueCommand($message, $channel, $sender, $sendto, $args) {
 		//*** roll manual subscribe queue raid; only raidleader! ***
 		$this->gauRollQueue();
-		$msg="Manual queue rolled!";
+		$msg = "Manual queue rolled!";
 		$sendto->reply($msg);
 	}
 
-	public function getGauCreator(){
+	public function getGauCreator() {
 		$timer = $this->timerController->get('Gauntlet');
 		if ($timer === null) {
 			return null;
-		} else {
-			return json_decode($timer->data, true);
 		}
+		return json_decode($timer->data, true);
 	}
 
 	/**
@@ -279,54 +273,54 @@ class GauntletController {
 	public function gauntletCommand($message, $channel, $sender, $sendto, $args) {
 		$timer = $this->timerController->get('Gauntlet');
 		if ($timer === null) {
-			$sendto->reply("No Gauntlettimer set! Seems like someone deleted it -.-");
-		} else {
-			$gautimer = $timer->endtime;
-			$dt = $gautimer-time();
-			$list = "Tradeskill: [<a href='chatcmd:///tell <myname> <symbol>gautrade'>Click me</a>]\n";
-			$creatorinfo = $this->getGauCreator();
-			$list .= "Timer updated by <highlight>".$creatorinfo['creator']."<end> at <highlight>".$this->tmTime($creatorinfo['createtime'])."<end>\n\n";
-
-			//alts handler more or less 8! Every blob has its max size, so we need such a thing
-			$altInfo = $this->altsController->getAltInfo($sender);
-			$aashort = count($altInfo->getAllAlts()) >= 9;
-
-			//spawntimes
-			for ($z = 0; $z <= 9; $z++) {
-				$list .= "    - ".$this->gauntgetTime($z)."\n";
-				//subscriber list
-				if(count($this->gaumem[$z])>0){
-					$list .= "         <yellow>";
-                                        $list .= join(', ', array_keys($this->gaumem[$z]));
-					$list .= " <end>\n         Sub/Unsub with |";
-				} else {
-					$list .= "         Sub/Unsub with |";
-				}
-				//add altslist
-				if ($aashort == false){
-					foreach ($altInfo->getAllAlts() as $alt) {
-						$list .= "<a href='chatcmd:///tell <myname> <symbol>gauntlet sub $z $alt'>$alt</a>|";
-					}
-				} else {
-					$list .= "<a href='chatcmd:///tell <myname> <symbol>gauntlet sub $z $altInfo->main'>$altInfo->main</a>|";
-					$list .= "<a href='chatcmd:///tell <myname> <symbol>gauntlet subalt $z $altInfo->main'>Other chars</a>|";
-				}
-				$list .= "\n\n";
-			}
-			$link = $this->text->makeBlob("Spawntimes for Portals", $list);
-
-			//if portal is open
-			$gptime = time()+61620-$gautimer;
-			if (($gptime > 0) && ($gptime <=($this->settingManager->get('gauntlet_portaltime')*60))) {
-				$gptime = $this->settingManager->get('gauntlet_portaltime')*60-$gptime;
-				$msg = "<highlight>Portal is open for <end><red>".$this->util->unixtimeToReadable($gptime)."<end><highlight>!<end> ".$link;
-				//otherwise show normal style
-			} else {
-				$msg = "<highlight>".$this->util->unixtimeToReadable($dt)."<end> until Vizaresh is vulnerable. ".$link;
-			}
-
-			$sendto->reply($msg);
+			$sendto->reply("No Gauntlettimer set! Seems like someone deleted it.");
+			return;
 		}
+		$gautimer = $timer->endtime;
+		$dt = $gautimer-time();
+		$list = "Tradeskill: [<a href='chatcmd:///tell <myname> <symbol>gautrade'>Click me</a>]\n";
+		$creatorinfo = $this->getGauCreator();
+		$list .= "Timer updated by <highlight>".$creatorinfo['creator']."<end> at <highlight>".$this->tmTime($creatorinfo['createtime'])."<end>\n\n";
+
+		//alts handler more or less 8! Every blob has its max size, so we need such a thing
+		$altInfo = $this->altsController->getAltInfo($sender);
+		$aashort = count($altInfo->getAllAlts()) >= 9;
+
+		//spawntimes
+		for ($z = 0; $z <= 9; $z++) {
+			$list .= "    - ".$this->gauntgetTime($z)."\n";
+			//subscriber list
+			if (count($this->gaumem[$z])>0) {
+				$list .= "         <yellow>";
+                                $list .= join(', ', array_keys($this->gaumem[$z]));
+				$list .= " <end>\n         Sub/Unsub with |";
+			} else {
+				$list .= "         Sub/Unsub with |";
+			}
+			//add altslist
+			if ($aashort == false) {
+				foreach ($altInfo->getAllAlts() as $alt) {
+					$list .= "<a href='chatcmd:///tell <myname> <symbol>gauntlet sub $z $alt'>$alt</a>|";
+				}
+			} else {
+				$list .= "<a href='chatcmd:///tell <myname> <symbol>gauntlet sub $z $altInfo->main'>$altInfo->main</a>|";
+				$list .= "<a href='chatcmd:///tell <myname> <symbol>gauntlet subalt $z $altInfo->main'>Other chars</a>|";
+			}
+			$list .= "\n\n";
+		}
+		$link = $this->text->makeBlob("Spawntimes for Portals", $list);
+
+		//if portal is open
+		$gptime = time()+61620-$gautimer;
+		if (($gptime > 0) && ($gptime <=($this->settingManager->get('gauntlet_portaltime')*60))) {
+			$gptime = $this->settingManager->get('gauntlet_portaltime')*60-$gptime;
+			$msg = "<highlight>Portal is open for <end><red>".$this->util->unixtimeToReadable($gptime)."<end><highlight>!<end> ".$link;
+			//otherwise show normal style
+		} else {
+			$msg = "<highlight>".$this->util->unixtimeToReadable($dt)."<end> until Vizaresh is vulnerable. ".$link;
+		}
+
+		$sendto->reply($msg);
 	}
 
 	/**
@@ -339,7 +333,7 @@ class GauntletController {
 		//roll subscribe list
 		$this->gauRollQueue();
 		//send something
-		$msg="Bot was updated manually! Vizaresh will be vulnerable at ".$this->gauntgetTime(0)."\n (Normal respawn is every 17h07m)";
+		$msg="Bot was updated manually! Vizaresh will be vulnerable at ".$this->gauntgetTime(0)."\n (respawn is every 17 hours and 7 minutes)";
 		$sendto->reply($msg);
 	}
 
@@ -370,8 +364,8 @@ class GauntletController {
 
 	private function gaudbexists($name) {
 		$row = $this->db->queryRow("SELECT * FROM gauntlet WHERE `player` = ? LIMIT 1", $name);
-		if ($row === null) { return false;}
-		else {return true;};
+
+		return $row !== null;
 	}
 
 	private function bastioninventory($name, $ac) {
@@ -401,8 +395,8 @@ class GauntletController {
 			}
 		}
 		$list .= "\n                         <a href='chatcmd:///tell <myname> <symbol>gaulist $name $ac'>Refresh</a>";
-		$link = $this->text->makeBlob("Bastion Inventory for $name", $list);
-		$tem = "Bastion-Inventar: ".$link;
+		$link = $this->text->makeBlob("Bastion inventory for $name", $list);
+		$tem = "Bastion inventory: ".$link;
 		return $tem;
 	}
 
@@ -415,9 +409,9 @@ class GauntletController {
 		//1. Check if player is in db and create if not
 		if ($this->gaudbexists($sender)==false) {
 			$this->db->exec("INSERT INTO `gauntlet` (`player`, `items`) VALUES (? , ?)", $sender, serialize(array(0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0)));
-			$msg = "Gauntletinventory created for $sender.";
+			$msg = "Gauntlet inventory created for $sender.";
 		} else {
-			$msg = "You already have a Gauntletinventory!";
+			$msg = "You already have a Gauntlet inventory!";
 		}
 		$sendto->reply($msg);
 	}
@@ -447,10 +441,18 @@ class GauntletController {
 		//check and get Bastioninventory
 		if ($this->gaudbexists($name)) {
 			$msg = $this->bastioninventory($name, $ac);
-		}else{
+		} else {
 			$msg = "No Bastion inventory found for $name, use <symbol>gaulist register.";
 		}
 		$sendto->reply($msg);
+	}
+
+	protected function altCheck($sender, $name) {
+		if ($this->gaudbexists($name) && ($this->checkalt($sender, $name))) {
+			return true;
+		}
+		$sendto->reply("Player \"$name\" doesn't exist or is not your alt.");
+		return false;
 	}
 
 	/**
@@ -462,18 +464,17 @@ class GauntletController {
 		$tt = array_fill(0,16,0);
 		$name = ucfirst(strtolower($args[1]));
 		//***Check and increase item
-		if ($this->gaudbexists($name)&&($this->checkalt($sender, $name))) {
-			if(($args[2]>=0)&&($args[2]<17)) {
-				$row = $this->db->queryRow("SELECT * FROM gauntlet WHERE `player` = ? LIMIT 1", $name);
-				$tt = unserialize($row->items);
-				++$tt[$args[2]];
-				$this->db->exec("UPDATE `gauntlet` SET `items` = ? WHERE `player` = ?", serialize($tt), $name);
-				$msg = "Item increased!";
-			} else {
-				$msg = "No valid itemID.";
-			}
+		if ($this->altCheck($sender, $name) === false) {
+			return;
+		}
+		if (($args[2]>=0)&&($args[2]<17)) {
+			$row = $this->db->queryRow("SELECT * FROM gauntlet WHERE `player` = ? LIMIT 1", $name);
+			$tt = unserialize($row->items);
+			++$tt[$args[2]];
+			$this->db->exec("UPDATE `gauntlet` SET `items` = ? WHERE `player` = ?", serialize($tt), $name);
+			$msg = "Item increased!";
 		} else {
-			$msg = "Player doesn't exist or it's not you alt!";
+			$msg = "No valid itemID.";
 		}
 		$sendto->reply($msg);
 	}
@@ -487,21 +488,20 @@ class GauntletController {
 		$tt = array_fill(0,16,0);
 		$name = ucfirst(strtolower($args[1]));
 		//***Check and increase item
-		if ($this->gaudbexists($name)&&($this->checkalt($sender, $name))) {
-			if(($args[2]>=0)&&($args[2]<17)) {
-				$row = $this->db->queryRow("SELECT * FROM gauntlet WHERE `player` = ? LIMIT 1", $name);
-				$tt = unserialize($row->items);
-				if($tt[$args[2]]>0){
-					--$tt[$args[2]];
-					$this->db->exec("UPDATE `gauntlet` SET `items` = ? WHERE `player` = ?", serialize($tt), $name);
-					$msg = "Item decreased!";
-				} else {
-					$msg = "Item is already at zero."; }
+		if ($this->altCheck($sender, $name) === false) {
+			return;
+		}
+		if (($args[2]>=0)&&($args[2]<17)) {
+			$row = $this->db->queryRow("SELECT * FROM gauntlet WHERE `player` = ? LIMIT 1", $name);
+			$tt = unserialize($row->items);
+			if ($tt[$args[2]]>0) {
+				--$tt[$args[2]];
+				$this->db->exec("UPDATE `gauntlet` SET `items` = ? WHERE `player` = ?", serialize($tt), $name);
+				$msg = "Item decreased!";
 			} else {
-				$msg = "No valid itemID.";
-			}
+				$msg = "Item is already at zero."; }
 		} else {
-			$msg = "Player doesn't exist or it's not you alt!";
+			$msg = "No valid itemID.";
 		}
 		$sendto->reply($msg);
 	}
@@ -510,7 +510,7 @@ class GauntletController {
 	//***   Gaubuff timer
 	//**************************************
 
-	public function getGauBuffCreator(){
+	public function getGauBuffCreator() {
 		$timer = $this->timerController->get('Gaubuff');
 		if ($timer === null) {
 			return null;
@@ -518,7 +518,7 @@ class GauntletController {
 		return json_decode($timer->data, true);
 	}
 
-	public function setGaubuff($time, $creator, $createtime){
+	public function setGaubuff($time, $creator, $createtime) {
 		$alerts = array();
 		foreach (explode(' ', $this->settingManager->get('gaubuff_times')) as $utime) {
 			$alertTimes[] = $this->util->parseTime($utime);
@@ -528,7 +528,7 @@ class GauntletController {
 			if (($time - $alertTime)>time()) {
 				$alert = new stdClass;
 				$alert->time = $time - $alertTime;
-				if ($alertTime == 0){
+				if ($alertTime == 0) {
 					$alert->message = $this->settingManager->get('gauntlet_color')."Gauntlet buff <highlight>expired<end>!<end>";
 				} else {
 					$alert->message = $this->settingManager->get('gauntlet_color')."Gauntlet buff runs out in <highlight>".$this->util->unixtimeToReadable($alertTime)."<end>!<end>";
@@ -545,12 +545,12 @@ class GauntletController {
 		$this->timerController->add('Gaubuff', $this->chatBot->vars['name'], $this->settingManager->get('gauntlet_channels'), $alerts, "GauntletController.gaubuffcallback", json_encode($data));
 	}
 
-	public function gaubuffcallback($timer, $alert){
+	public function gaubuffcallback($timer, $alert) {
 		if ($this->settingManager->get('gauntlet_channels')== "priv") {
 			$this->chatBot->sendPrivate($alert->message, true);
 		} else if ($this->settingManager->get('gauntlet_channels')== "guild") {
 			$this->chatBot->sendGuild($alert->message, true);
-		} else if ($this->settingManager->get('gauntlet_channels')== "both"){
+		} else if ($this->settingManager->get('gauntlet_channels')== "both") {
 			$this->chatBot->sendPrivate($alert->message, true);
 			$this->chatBot->sendGuild($alert->message, true);
 		}
@@ -589,29 +589,31 @@ class GauntletController {
 	 *
 	 * @HandlesCommand("gaubuff")
 	 * @Matches("/^gaubuff$/i")
-	 * @Matches("/^gaubuff ([0-9]+):([0-9]+)$/i")
-	 * @Matches("/^gaubuff ([0-9]+)h([0-9]+)m$/i")
+	 * @Matches("/^gaubuff ([a-z0-9 ]+)$/i")
 	 */
 	public function gaubuffCommand($message, $channel, $sender, $sendto, $args) {
 		//set time
-		if(isset($args[1])){
-			$hours=$args[1];
-			$minutes=$args[2];
-			$despawn=time()+$hours*3600+$minutes*60;
-			$this->setGaubuff($despawn, $sender, time());
-			$msg="Gauntletbuff timer has been set and expires at ".$this->tmTime($despawn);
-			$sendto->reply($msg);
-		} else {
-			//get time
-			$timer = $this->timerController->get('Gaubuff');
-			if ($timer === null) {
-				$sendto->reply("No Gauntlet buff available!");
-			} else {
-				$gaubuff = $timer->endtime - time();
-				$msg = $this->settingManager->get('gauntlet_color')."Gauntlet buff runs out in <highlight>".$this->util->unixtimeToReadable($gaubuff)."<end><end>!";
-				//$creatorinfo = $this->getGauCreator();
+		if (isset($args[1])) {
+			$buffEnds = $this->util->parseTime($args[1]);
+			if ($buffEnds < 1) {
+				$msg = "You must enter a valid time parameter for the gauntlet buff time.";
 				$sendto->reply($msg);
+				return;
 			}
+			$buffEnds += time();
+			$this->setGaubuff($buffEnds, $sender, time());
+			$msg="Gauntletbuff timer has been set and expires at <highlight>".$this->tmTime($buffEnds)."<end>.";
+			$sendto->reply($msg);
+			return;
+		}
+		//get time
+		$timer = $this->timerController->get('Gaubuff');
+		if ($timer === null) {
+			$sendto->reply("No Gauntlet buff available!");
+		} else {
+			$gaubuff = $timer->endtime - time();
+			$msg = "Gauntlet buff runs out in <highlight>".$this->util->unixtimeToReadable($gaubuff)."<end>.";
+			$sendto->reply($msg);
 		}
 	}
 
@@ -633,16 +635,16 @@ class GauntletController {
 		foreach($this->gaumem[0] as $key => $value) {
 			$altInfo = $this->altsController->getAltInfo($key);
 			foreach ($altInfo->getOnlineAlts() as $name) {
-				if ($name<>$key) {
-					$this->chatBot->sendTell("<red>###Gauntlet is in $tstr (subscribed with $key)!!!###<end>", $name);
+				if ($name != $key) {
+					$this->chatBot->sendTell("<red>Gauntlet is in $tstr (subscribed with $key).<end>", $name);
 				} else {
-					$this->chatBot->sendTell("<red>###Gauntlet is in $tstr!!!###<end>", $name);
+					$this->chatBot->sendTell("<red>Gauntlet is in $tstr.<end>", $name);
 				}
 			}
 		}
 	}
 
-	public function gauntletcallback($timer, $alert){
+	public function gauntletcallback($timer, $alert) {
 		if ($timer->endtime - $alert->time == 1800) {
 			$this->gauAlert("30 min");
 			//this could be upgraded by adding setting etc
@@ -651,7 +653,7 @@ class GauntletController {
 			$this->chatBot->sendPrivate($alert->message, true);
 		} else if ($this->settingManager->get('gauntlet_channels')== "guild") {
 			$this->chatBot->sendGuild($alert->message, true);
-		} else if ($this->settingManager->get('gauntlet_channels')== "both"){
+		} else if ($this->settingManager->get('gauntlet_channels')== "both") {
 			$this->chatBot->sendPrivate($alert->message, true);
 			$this->chatBot->sendGuild($alert->message, true);
 		}
@@ -663,7 +665,7 @@ class GauntletController {
 		}
 	}
 
-	public function setGauTime($time, $creator, $createtime){
+	public function setGauTime($time, $creator, $createtime) {
 		$alerts = array();
 		$portaltime = $this->util->parseTime($this->settingManager->get('gauntlet_portaltime'));
 		foreach (explode(' ', $this->settingManager->get('gauntlet_times')) as $utime) {
@@ -675,12 +677,12 @@ class GauntletController {
 		//make sure the order is correct...maybe this little thing could be included in the Timecontroller.class.php when adding
 		rsort($alertTimes);
 		foreach ($alertTimes as $alertTime) {
-			if (($time - $alertTime)>time()){
+			if (($time - $alertTime)>time()) {
 				$alert = new stdClass;
 				$alert->time = $time - $alertTime;
-				if ($alertTime == 0){
+				if ($alertTime == 0) {
 					$alert->message = $this->settingManager->get('gauntlet_color')."Vizaresh <highlight>VULNERABLE/DOWN<end>!<end>";
-				}else if ($alertTime == 420) {
+				} else if ($alertTime == 420) {
 					$alert->message = $this->settingManager->get('gauntlet_color')."Vizaresh <highlight>SPAWNED (7 min left)<end>!<end>";
 				} else if ($alertTime == (61620-$portaltime)) {
 					$alert->message = $this->settingManager->get('gauntlet_color')."Portal is <highlight>GONE<end>!<end>";
