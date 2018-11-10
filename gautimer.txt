@@ -5,15 +5,15 @@
 
 <highlight>Update Gauntletimer:<end>
 <tab><symbol>gauupdate X:Y
-<tab><symbol>gauupdate XhYm
-or
+<tab><symbol>gauupdate XhYmZs
+<highlight>or<end>
 <tab><symbol>gauset X:Y
-<tab><symbol>gauset XhYm
-X = hours and Y = minutes till Vizaresh is vulnerable/down!
+<tab><symbol>gauset XhYmZs
+X = hours and Y = minutes and Z = seconds until Vizaresh is vulnerable!
 
 <highlight>Vizaresh killed:<end>
 <tab><symbol>gaukill
-sets automaticly 17h7m timmer.
+automatically sets a 17h7m timer.
 
 <highlight>Subscribe for a raid<end>
 If you want to subscribe for a raid then simply
@@ -26,15 +26,4 @@ and the char you want to participate.
 For manual Subscribequeue roll:
 <tab><symbol>gauntlet rollqueue
 
-Normal respawntime is 17:7
-
------------------------------------------
-
-<highlight>Show current Gauntlet buff Timer:<end>
-<tab><symbol>gaubuff
-
-<highlight>Set Gauntlet buff Timer:<end>
-<tab><symbol>gaubuff X:Y
-<tab><symbol>gaubuff XhYm
-
-
+Normal respawntime is 17h7m

@@ -83,7 +83,7 @@
  *		command     = 'gaubuff',
  *		accessLevel = 'all',
  *		description = 'Handles timer for gauntlet buff',
- *		help        = 'gautimer.txt'
+ *		help        = 'gaubuff.txt'
  *	)
  */
 class GauntletController {
