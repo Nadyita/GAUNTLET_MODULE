@@ -602,7 +602,7 @@ class GauntletController {
 			}
 			$buffEnds += time();
 			$this->setGaubuff($buffEnds, $sender, time());
-			$msg="Gauntletbuff timer has been set and expires at <highlight>".$this->tmTime($buffEnds)."<end>.";
+			$msg = "Gauntletbuff timer has been set and expires at <highlight>".$this->tmTime($buffEnds)."<end>.";
 			$sendto->reply($msg);
 			return;
 		}
@@ -610,11 +610,11 @@ class GauntletController {
 		$timer = $this->timerController->get('Gaubuff');
 		if ($timer === null) {
 			$sendto->reply("No Gauntlet buff available!");
-		} else {
-			$gaubuff = $timer->endtime - time();
-			$msg = "Gauntlet buff runs out in <highlight>".$this->util->unixtimeToReadable($gaubuff)."<end>.";
-			$sendto->reply($msg);
+			return;
 		}
+		$gaubuff = $timer->endtime - time();
+		$msg = "Gauntlet buff runs out in <highlight>".$this->util->unixtimeToReadable($gaubuff)."<end>.";
+		$sendto->reply($msg);
 	}
 
 	//**************************************
