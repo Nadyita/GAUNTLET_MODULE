@@ -451,7 +451,7 @@ class GauntletController {
 		if ($this->gaudbexists($name) && ($this->checkalt($sender, $name))) {
 			return true;
 		}
-		$sendto->reply("Player \"$name\" doesn't exist or is not your alt.");
+		$sender->reply("Player \"$name\" doesn't exist or is not your alt.");
 		return false;
 	}
 
