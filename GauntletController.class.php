@@ -447,11 +447,11 @@ class GauntletController {
 		$sendto->reply($msg);
 	}
 
-	protected function altCheck($sender, $name) {
+	protected function altCheck($sendto, $sender, $name) {
 		if ($this->gaudbexists($name) && ($this->checkalt($sender, $name))) {
 			return true;
 		}
-		$sender->reply("Player \"$name\" doesn't exist or is not your alt.");
+		$sendto->reply("Player \"$name\" doesn't exist or is not your alt.");
 		return false;
 	}
 
@@ -464,7 +464,7 @@ class GauntletController {
 		$tt = array_fill(0,16,0);
 		$name = ucfirst(strtolower($args[1]));
 		//***Check and increase item
-		if ($this->altCheck($sender, $name) === false) {
+		if ($this->altCheck($sendto, $sender, $name) === false) {
 			return;
 		}
 		if (($args[2]>=0)&&($args[2]<17)) {
@@ -488,7 +488,7 @@ class GauntletController {
 		$tt = array_fill(0,16,0);
 		$name = ucfirst(strtolower($args[1]));
 		//***Check and increase item
-		if ($this->altCheck($sender, $name) === false) {
+		if ($this->altCheck($sendto, $sender, $name) === false) {
 			return;
 		}
 		if (($args[2]>=0)&&($args[2]<17)) {
