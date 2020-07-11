@@ -1,8 +1,14 @@
 <?php
 
+namespace Budabot\User\Modules\GAUNTLET_MODULE;
+
+use DateTime;
+use DateTimeZone;
+use stdClass;
+
 /**
- * Authors:
- *  - Equi
+ * @author Equi
+ * @author Nadyita (RK5) <nadyita@hodorraid.org>
  * @Instance
  *
  * Commands this controller contains:
@@ -94,28 +100,52 @@ class GauntletController {
 	 */
 	public $moduleName;
 
-	/** @Inject */
+	/**
+	 * @Inject
+	 * @var \Budabot\Core\Text $text
+	 */
 	public $text;
 
-	/** @Inject */
+	/**
+	 * @Inject
+	 * @var \Budabot\Core\SettingManager $settingManager
+	 */
 	public $settingManager;
 
-	/** @Inject */
+	/**
+	 * @Inject
+	 * @var \Budabot\Core\Budabot $chatBot
+	 */
 	public $chatBot;
 
-	/** @Inject */
+	/**
+	 * @Inject
+	 * @var \Budabot\Core\DB $db
+	 */
 	public $db;
 
-	/** @Inject */
+	/**
+	 * @Inject
+	 * @var \Budabot\Core\Util $util
+	 */
 	public $util;
 
-	/** @Inject */
+	/**
+	 * @Inject
+	 * @var \Budabot\Core\Modules\ALTS\AltsController $altsController
+	 */
 	public $altsController;
 
-	/** @Logger */
+	/**
+	 * @Inject
+	 * @var \Budabot\Core\LoggerWrapper $logger
+	 */
 	public $logger;
 
-	/** @Inject */
+	/**
+	 * @Inject
+	 * @var \Budabot\Modules\TIMERS_MODULE\TimerController
+	 */
 	public $timerController;
 
 	//(ref , image, need) 16 items without basic armor
@@ -136,14 +166,93 @@ class GauntletController {
 	 */
 	public function setup() {
 		$this->db->loadSQLFile($this->moduleName, 'Gauntlet');
-		$this->settingManager->add($this->moduleName, "gauntlet_timezone", "Choose you timezone", "edit", "text", "Europe/Berlin", "Europe/Berlin;America/New_York;Europe/Amsterdam;Europe/London", '', "mod");
-		$this->settingManager->add($this->moduleName, 'gauntlet_times', 'Times to display timer alerts', 'edit', 'text', '2h 1h 30m 10m', '2h 1h 30m 10m', '', 'mod', 'gau_times.txt');
-		$this->settingManager->add($this->moduleName, "gauntlet_portaltime", "Select how long Gauntletportal is open", 'edit', 'text', '6m30s', '6m30s', '', 'mod', 'gau_times.txt');
-		$this->settingManager->add($this->moduleName, "gauntlet_color", "Color for the gauntlet chat timer", "edit", "color", "<font color=#999900>");
-		$this->settingManager->add($this->moduleName, 'gauntlet_channels', 'Channels to display timer alerts', 'edit', 'text', 'both', 'guild;priv;both', '', 'mod', 'gau_times.txt');
-		$this->settingManager->add($this->moduleName, 'gauntlet_autoset', 'Automaticly reset timer on restart or reconnect', "edit", "options", "0", "true;false", "1;0");
-		$this->settingManager->add($this->moduleName, 'gaubuff_times', 'Times to display gaubuff timer alerts', 'edit', 'text', '30m 10m', '30m 10m', '', 'mod', 'gau_times.txt');
-		$this->settingManager->add($this->moduleName, "gaubuff_logon", "Show gaubuff timer on logon", "edit", "options", "1", "Yes;No", "1;0");
+		$this->settingManager->add(
+			$this->moduleName,
+			"gauntlet_timezone",
+			"Choose your timezone",
+			"edit",
+			"text",
+			"Europe/Berlin",
+			"Europe/Berlin;America/New_York;Europe/Amsterdam;Europe/London",
+			'',
+			"mod"
+		);
+		$this->settingManager->add(
+			$this->moduleName,
+			'gauntlet_times',
+			'Times to display timer alerts',
+			'edit',
+			'text',
+			'2h 1h 30m 10m',
+			'2h 1h 30m 10m',
+			'',
+			'mod',
+			'gau_times.txt'
+		);
+		$this->settingManager->add(
+			$this->moduleName,
+			"gauntlet_portaltime",
+			"Select how long Gauntletportal is open",
+			'edit',
+			'text',
+			'6m30s',
+			'6m30s',
+			'',
+			'mod',
+			'gau_times.txt'
+		);
+		$this->settingManager->add(
+			$this->moduleName,
+			"gauntlet_color",
+			"Color for the gauntlet chat timer",
+			"edit",
+			"color",
+			"<font color=#999900>"
+		);
+		$this->settingManager->add(
+			$this->moduleName,
+			'gauntlet_channels',
+			'Channels to display timer alerts',
+			'edit',
+			'text',
+			'both',
+			'guild;priv;both',
+			'',
+			'mod',
+			'gau_times.txt'
+		);
+		$this->settingManager->add(
+			$this->moduleName,
+			'gauntlet_autoset',
+			'Automaticly reset timer on restart or reconnect',
+			"edit",
+			"options",
+			"0",
+			"true;false",
+			"1;0"
+		);
+		$this->settingManager->add(
+			$this->moduleName,
+			'gaubuff_times',
+			'Times to display gaubuff timer alerts',
+			'edit',
+			'text',
+			'30m 10m',
+			'30m 10m',
+			'',
+			'mod',
+			'gau_times.txt'
+		);
+		$this->settingManager->add(
+			$this->moduleName,
+			"gaubuff_logon",
+			"Show gaubuff timer on logon",
+			"edit",
+			"options",
+			"1",
+			"Yes;No",
+			"1;0"
+		);
 	}
 
 	private function tmTime($zz) {
@@ -225,8 +334,8 @@ class GauntletController {
 		}
 		$msg = "Subscription for the Gauntlet at ".$this->gauntgetTime($args[1])." with the main $args[2]:\n\n";
 		$altInfo = $this->altsController->getAltInfo($args[2]);
-                $allAlts = $altInfo->getAllAlts();
-                sort($allAlts);
+		$allAlts = $altInfo->getAllAlts();
+		sort($allAlts);
 		foreach ($allAlts as $alt) {
 			$msg .= "     - <a href='chatcmd:///tell <myname> <symbol>gauntlet sub $args[1] $alt'>$alt</a>\n";
 		}
@@ -238,7 +347,7 @@ class GauntletController {
 		$gau = $this->gaumem;
 		unset($this->gaumem);
 		for ($z = 1; $z <= 9; $z++) {
-			foreach($gau[$z] as $key => $value) {
+			foreach ($gau[$z] as $key => $value) {
 				$this->gaumem[$z-1][$key]=1;
 			}
 		}
@@ -292,7 +401,7 @@ class GauntletController {
 			//subscriber list
 			if (count($this->gaumem[$z])>0) {
 				$list .= "         <yellow>";
-                                $list .= join(', ', array_keys($this->gaumem[$z]));
+				$list .= join(', ', array_keys($this->gaumem[$z]));
 				$list .= " <end>\n         Sub/Unsub with |";
 			} else {
 				$list .= "         Sub/Unsub with |";
@@ -348,7 +457,7 @@ class GauntletController {
 			$sendto->reply($msg);
 			return;
 		}
-                $newSpawn += time();
+		$newSpawn += time();
 		$this->setGauTime($newSpawn, $sender, time());
 		$msg="Bot was updated manually! Vizaresh will be vulnerable at ".$this->gauntgetTime(0)."\n (Normal respawn is every 17h07m)";
 		$sendto->reply($msg);
@@ -376,10 +485,10 @@ class GauntletController {
 			$ac = 1;
 		}
 		//Do blob box
-                $list = "Tradeskill: [<a href='chatcmd:///tell <myname> <symbol>gautrade'>Click me</a>]\n".
-                        "Needed items for: [<a href='chatcmd:///tell <myname> <symbol>gaulist $name 1'>1 Armor</a>|".
-                                           "<a href='chatcmd:///tell <myname> <symbol>gaulist $name 2'>2 Armor</a>|".
-                                           "<a href='chatcmd:///tell <myname> <symbol>gaulist $name 3'>3 Armor</a>]\n";
+		$list = "Tradeskill: [<a href='chatcmd:///tell <myname> <symbol>gautrade'>Click me</a>]\n" .
+			"Needed items for: [<a href='chatcmd:///tell <myname> <symbol>gaulist $name 1'>1 Armor</a>|" .
+			"<a href='chatcmd:///tell <myname> <symbol>gaulist $name 2'>2 Armor</a>|" .
+			"<a href='chatcmd:///tell <myname> <symbol>gaulist $name 3'>3 Armor</a>]\n";
 		$list .= "Items needed for ".$ac." Bastionarmorparts.\n<green>[Amount you have]<end>|<red>[Amount you need]<end>\n[+]=increase Item      [-]=decrease Item\n\n";
 
 		for ($i = 0; $i <= 16; $i++) {
@@ -387,11 +496,27 @@ class GauntletController {
 			if ((($i+1) % 4)==0) {
 				$list .= "\n";
 				for ($ii = $i-3; $ii<=$i; $ii++) {
-					$list .= "[<a href='chatcmd:///tell <myname> <symbol>gaulist add $name $ii'> + </a>|<green>".$tem[$ii]."<end>|<red>".$this->checkZero(($ac*$this->gaulisttab[$ii][2])-$tem[$ii])."<end>|<a href='chatcmd:///tell <myname> <symbol>gaulist del $name $ii'> - </a>] ";
+					$list .= "[".
+						"<a href='chatcmd:///tell <myname> <symbol>gaulist add $name $ii'> + </a>".
+						"|".
+						"<green>".$tem[$ii]."<end>".
+						"|".
+						"<red>".$this->checkZero(($ac*$this->gaulisttab[$ii][2])-$tem[$ii])."<end>".
+						"|".
+						"<a href='chatcmd:///tell <myname> <symbol>gaulist del $name $ii'> - </a>".
+						"] ";
 				}
 				$list .= "\n";
 			} elseif ($i==16) {
-				$list .= "\n[<a href='chatcmd:///tell <myname> <symbol>gaulist add $name $i'> + </a>|<green>".$tem[$i]."<end>|<red>".$this->checkZero(($ac*$this->gaulisttab[$i][2])-$tem[$i])."<end>|<a href='chatcmd:///tell <myname> <symbol>gaulist del $name $i'> - </a>]\n";
+				$list .= "\n[".
+					"<a href='chatcmd:///tell <myname> <symbol>gaulist add $name $i'> + </a>".
+					"|".
+					"<green>".$tem[$i]."<end>".
+					"|".
+					"<red>".$this->checkZero(($ac*$this->gaulisttab[$i][2])-$tem[$i])."<end>".
+					"|".
+					"<a href='chatcmd:///tell <myname> <symbol>gaulist del $name $i'> - </a>".
+					"]\n";
 			}
 		}
 		$list .= "\n                         <a href='chatcmd:///tell <myname> <symbol>gaulist $name $ac'>Refresh</a>";
@@ -461,9 +586,9 @@ class GauntletController {
 	 */
 	public function gaulistAddCommand($message, $channel, $sender, $sendto, $args) {
 		$tt = array();
-		$tt = array_fill(0,16,0);
+		$tt = array_fill(0, 16, 0);
 		$name = ucfirst(strtolower($args[1]));
-		//***Check and increase item
+		// Check and increase item
 		if ($this->altCheck($sendto, $sender, $name) === false) {
 			return;
 		}
@@ -485,9 +610,9 @@ class GauntletController {
 	 */
 	public function gaulistDelCommand($message, $channel, $sender, $sendto, $args) {
 		$tt = array();
-		$tt = array_fill(0,16,0);
+		$tt = array_fill(0, 16, 0);
 		$name = ucfirst(strtolower($args[1]));
-		//***Check and increase item
+		// Check and increase item
 		if ($this->altCheck($sendto, $sender, $name) === false) {
 			return;
 		}
@@ -499,7 +624,8 @@ class GauntletController {
 				$this->db->exec("UPDATE `gauntlet` SET `items` = ? WHERE `player` = ?", serialize($tt), $name);
 				$msg = "Item decreased!";
 			} else {
-				$msg = "Item is already at zero."; }
+				$msg = "Item is already at zero.";
+			}
 		} else {
 			$msg = "No valid itemID.";
 		}
@@ -548,9 +674,9 @@ class GauntletController {
 	public function gaubuffcallback($timer, $alert) {
 		if ($this->settingManager->get('gauntlet_channels')== "priv") {
 			$this->chatBot->sendPrivate($alert->message, true);
-		} else if ($this->settingManager->get('gauntlet_channels')== "guild") {
+		} elseif ($this->settingManager->get('gauntlet_channels')== "guild") {
 			$this->chatBot->sendGuild($alert->message, true);
-		} else if ($this->settingManager->get('gauntlet_channels')== "both") {
+		} elseif ($this->settingManager->get('gauntlet_channels')== "both") {
 			$this->chatBot->sendPrivate($alert->message, true);
 			$this->chatBot->sendGuild($alert->message, true);
 		}
@@ -565,7 +691,13 @@ class GauntletController {
 		if ($this->chatBot->isReady() && (isset($this->chatBot->guildmembers[$sender])) && ($this->settingManager->get('gaubuff_logon'))) {
 			$timer = $this->timerController->get('Gaubuff');
 			if ($timer !== null) {
-				$this->chatBot->sendTell($this->settingManager->get('gauntlet_color')."Gauntlet buff runs out in <highlight>".$this->util->unixtimeToReadable($timer->endtime - time())."<end><end>!", $sender);
+				$this->chatBot->sendTell(
+					$this->settingManager->get('gauntlet_color').
+					"Gauntlet buff runs out in ".
+					"<highlight>".$this->util->unixtimeToReadable($timer->endtime - time())."<end>".
+					"<end>!",
+					$sender
+				);
 			}
 		}
 	}
@@ -579,7 +711,13 @@ class GauntletController {
 		if ($this->settingManager->get('gaubuff_logon')) {
 			$timer = $this->timerController->get('Gaubuff');
 			if ($timer !== null) {
-				$this->chatBot->sendTell($this->settingManager->get('gauntlet_color')."Gauntlet buff runs out in <highlight>".$this->util->unixtimeToReadable($timer->endtime - time())."<end><end>!", $sender);
+				$this->chatBot->sendTell(
+					$this->settingManager->get('gauntlet_color').
+					"Gauntlet buff runs out in ".
+					"<highlight>".$this->util->unixtimeToReadable($timer->endtime - time())."<end>".
+					"<end>!",
+					$sender
+				);
 			}
 		}
 	}
@@ -632,7 +770,7 @@ class GauntletController {
 	}
 
 	private function gauAlert($tstr) {
-		foreach($this->gaumem[0] as $key => $value) {
+		foreach ($this->gaumem[0] as $key => $value) {
 			$altInfo = $this->altsController->getAltInfo($key);
 			foreach ($altInfo->getOnlineAlts() as $name) {
 				if ($name != $key) {
@@ -651,9 +789,9 @@ class GauntletController {
 		}
 		if ($this->settingManager->get('gauntlet_channels')== "priv") {
 			$this->chatBot->sendPrivate($alert->message, true);
-		} else if ($this->settingManager->get('gauntlet_channels')== "guild") {
+		} elseif ($this->settingManager->get('gauntlet_channels')== "guild") {
 			$this->chatBot->sendGuild($alert->message, true);
-		} else if ($this->settingManager->get('gauntlet_channels')== "both") {
+		} elseif ($this->settingManager->get('gauntlet_channels')== "both") {
 			$this->chatBot->sendPrivate($alert->message, true);
 			$this->chatBot->sendGuild($alert->message, true);
 		}
@@ -682,11 +820,11 @@ class GauntletController {
 				$alert->time = $time - $alertTime;
 				if ($alertTime == 0) {
 					$alert->message = $this->settingManager->get('gauntlet_color')."Vizaresh <highlight>VULNERABLE/DOWN<end>!<end>";
-				} else if ($alertTime == 420) {
+				} elseif ($alertTime == 420) {
 					$alert->message = $this->settingManager->get('gauntlet_color')."Vizaresh <highlight>SPAWNED (7 min left)<end>!<end>";
-				} else if ($alertTime == (61620-$portaltime)) {
+				} elseif ($alertTime == (61620-$portaltime)) {
 					$alert->message = $this->settingManager->get('gauntlet_color')."Portal is <highlight>GONE<end>!<end>";
-				} else if ($alertTime > (61620-$portaltime)) {
+				} elseif ($alertTime > (61620-$portaltime)) {
 					$alert->message = $this->settingManager->get('gauntlet_color')."Portal is open for <red>".$this->util->unixtimeToReadable($alertTime)."<end>!<end>";
 				} else {
 					$alert->message = $this->settingManager->get('gauntlet_color')."Gauntlet is in <highlight>".$this->util->unixtimeToReadable($alertTime)."<end>!<end>";
@@ -703,5 +841,4 @@ class GauntletController {
 		$this->timerController->remove('Gauntlet');
 		$this->timerController->add('Gauntlet', $this->chatBot->vars['name'], $this->settingManager->get('gauntlet_channels'), $alerts, "GauntletController.gauntletcallback", json_encode($data));
 	}
-
 }
