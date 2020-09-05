@@ -4,7 +4,7 @@ namespace Budabot\User\Modules\GAUNTLET_MODULE;
 
 use DateTime;
 use DateTimeZone;
-use stdClass;
+use Nadybot\Modules\TIMERS_MODULE\Alert;
 
 /**
  * @author Equi
@@ -149,13 +149,13 @@ class GauntletController {
 	public $timerController;
 
 	//(ref , image, need) 16 items without basic armor
-	private $gaulisttab =   array(
-		array(292507, 292793, 3), array(292509, 292775, 1), array(292508, 292776, 1), array(292510, 292774, 1),
-		array(292514, 292764, 1), array(292515, 292780, 1), array(292516, 292792, 1), array(292532, 292760, 3),
-		array(292533, 292788, 3), array(292529, 292779, 3), array(292530, 292759, 3), array(292524, 292784, 3),
-		array(292538, 292772, 3), array(292525, 292763, 3), array(292526, 292777, 3), array(292528, 292778, 3),
-		array(292517,292762,3)
-	);
+	private $gaulisttab =   [
+		[292507, 292793, 3], [292509, 292775, 1], [292508, 292776, 1], [292510, 292774, 1],
+		[292514, 292764, 1], [292515, 292780, 1], [292516, 292792, 1], [292532, 292760, 3],
+		[292533, 292788, 3], [292529, 292779, 3], [292530, 292759, 3], [292524, 292784, 3],
+		[292538, 292772, 3], [292525, 292763, 3], [292526, 292777, 3], [292528, 292778, 3],
+		[292517,292762,3]
+	];
 
 	//no need for sql db, because after downtime you need new time...
 	private $gaunmem;
@@ -533,7 +533,7 @@ class GauntletController {
 		//Creates a db for your char
 		//1. Check if player is in db and create if not
 		if ($this->gaudbexists($sender)==false) {
-			$this->db->exec("INSERT INTO `gauntlet` (`player`, `items`) VALUES (? , ?)", $sender, serialize(array(0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0)));
+			$this->db->exec("INSERT INTO `gauntlet` (`player`, `items`) VALUES (? , ?)", $sender, serialize([0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0]));
 			$msg = "Gauntlet inventory created for $sender.";
 		} else {
 			$msg = "You already have a Gauntlet inventory!";
@@ -585,7 +585,7 @@ class GauntletController {
 	 * @Matches("/^gaulist add ([a-z0-9]+) ([0-9]+)$/i")
 	 */
 	public function gaulistAddCommand($message, $channel, $sender, $sendto, $args) {
-		$tt = array();
+		$tt = [];
 		$tt = array_fill(0, 16, 0);
 		$name = ucfirst(strtolower($args[1]));
 		// Check and increase item
@@ -609,7 +609,7 @@ class GauntletController {
 	 * @Matches("/^gaulist del ([a-z0-9]+) ([0-9]+)$/i")
 	 */
 	public function gaulistDelCommand($message, $channel, $sender, $sendto, $args) {
-		$tt = array();
+		$tt = [];
 		$tt = array_fill(0, 16, 0);
 		$name = ucfirst(strtolower($args[1]));
 		// Check and increase item
@@ -645,14 +645,14 @@ class GauntletController {
 	}
 
 	public function setGaubuff($time, $creator, $createtime) {
-		$alerts = array();
+		$alerts = [];
 		foreach (explode(' ', $this->settingManager->get('gaubuff_times')) as $utime) {
 			$alertTimes[] = $this->util->parseTime($utime);
 		}
 		$alertTimes[] = 0;                  //timer runs out
 		foreach ($alertTimes as $alertTime) {
 			if (($time - $alertTime)>time()) {
-				$alert = new stdClass;
+				$alert = new Alert();
 				$alert->time = $time - $alertTime;
 				if ($alertTime == 0) {
 					$alert->message = $this->settingManager->get('gauntlet_color')."Gauntlet buff <highlight>expired<end>!<end>";
@@ -662,7 +662,7 @@ class GauntletController {
 				$alerts []= $alert;
 			}
 		}
-		$data = array();
+		$data = [];
 		$data['createtime'] = $createtime;
 		$data['creator'] = $creator;
 		$data['repeat'] = 0;
@@ -804,7 +804,8 @@ class GauntletController {
 	}
 
 	public function setGauTime($time, $creator, $createtime) {
-		$alerts = array();
+		/** @var Alert[] */
+		$alerts = [];
 		$portaltime = $this->util->parseTime($this->settingManager->get('gauntlet_portaltime'));
 		foreach (explode(' ', $this->settingManager->get('gauntlet_times')) as $utime) {
 			$alertTimes[] = $this->util->parseTime($utime);
@@ -816,7 +817,7 @@ class GauntletController {
 		rsort($alertTimes);
 		foreach ($alertTimes as $alertTime) {
 			if (($time - $alertTime)>time()) {
-				$alert = new stdClass;
+				$alert = new Alert();
 				$alert->time = $time - $alertTime;
 				if ($alertTime == 0) {
 					$alert->message = $this->settingManager->get('gauntlet_color')."Vizaresh <highlight>VULNERABLE/DOWN<end>!<end>";
@@ -832,7 +833,7 @@ class GauntletController {
 				$alerts []= $alert;
 			}
 		}
-		$data = array();
+		$data = [];
 		$data['createtime'] = $createtime;
 		$data['creator'] = $creator;
 		$data['repeat'] = 61620;
