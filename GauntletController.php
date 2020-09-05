@@ -1,10 +1,19 @@
 <?php
 
-namespace Budabot\User\Modules\GAUNTLET_MODULE;
+namespace Nadybot\User\Modules\GAUNTLET_MODULE;
 
 use DateTime;
 use DateTimeZone;
+use Nadybot\Core\CommandReply;
+use Nadybot\Core\DB;
+use Nadybot\Core\LoggerWrapper;
+use Nadybot\Core\Modules\ALTS\AltsController;
+use Nadybot\Core\Nadybot;
+use Nadybot\Core\SettingManager;
+use Nadybot\Core\Text;
+use Nadybot\Core\Util;
 use Nadybot\Modules\TIMERS_MODULE\Alert;
+use Nadybot\Modules\TIMERS_MODULE\TimerController;
 
 /**
  * @author Equi
@@ -98,55 +107,31 @@ class GauntletController {
 	 * Name of the module.
 	 * Set automatically by module loader.
 	 */
-	public $moduleName;
+	public string $moduleName;
 
-	/**
-	 * @Inject
-	 * @var \Budabot\Core\Text $text
-	 */
-	public $text;
+	/** @Inject */
+	public Text $text;
 
-	/**
-	 * @Inject
-	 * @var \Budabot\Core\SettingManager $settingManager
-	 */
-	public $settingManager;
+	/** @Inject */
+	public SettingManager $settingManager;
 
-	/**
-	 * @Inject
-	 * @var \Budabot\Core\Budabot $chatBot
-	 */
-	public $chatBot;
+	/** @Inject */
+	public Nadybot $chatBot;
 
-	/**
-	 * @Inject
-	 * @var \Budabot\Core\DB $db
-	 */
-	public $db;
+	/** @Inject */
+	public DB $db;
 
-	/**
-	 * @Inject
-	 * @var \Budabot\Core\Util $util
-	 */
-	public $util;
+	/** @Inject */
+	public Util $util;
 
-	/**
-	 * @Inject
-	 * @var \Budabot\Core\Modules\ALTS\AltsController $altsController
-	 */
-	public $altsController;
+	/** @Inject */
+	public AltsController $altsController;
 
-	/**
-	 * @Inject
-	 * @var \Budabot\Core\LoggerWrapper $logger
-	 */
-	public $logger;
+	/** @Logger */
+	public LoggerWrapper $logger;
 
-	/**
-	 * @Inject
-	 * @var \Budabot\Modules\TIMERS_MODULE\TimerController
-	 */
-	public $timerController;
+	/** @Inject */
+	public TimerController $timerController;
 
 	//(ref , image, need) 16 items without basic armor
 	private $gaulisttab =   [
@@ -156,9 +141,6 @@ class GauntletController {
 		[292538, 292772, 3], [292525, 292763, 3], [292526, 292777, 3], [292528, 292778, 3],
 		[292517,292762,3]
 	];
-
-	//no need for sql db, because after downtime you need new time...
-	private $gaunmem;
 
 	/**
 	 * @Setup
@@ -450,7 +432,7 @@ class GauntletController {
 	 * @HandlesCommand("gauupdate")
 	 * @Matches("/^gauupdate ([a-z0-9 ]+)$/i")
 	 */
-	public function gauupdateCommand($message, $channel, $sender, $sendto, $args) {
+	public function gauupdateCommand(string $message, string $channel, string $sender, CommandReply $sendto, array $args): void {
 		$newSpawn = $this->util->parseTime($args[1]);
 		if ($newSpawn < 1) {
 			$msg = "You must enter a valid time parameter for the gauntlet update time.";
